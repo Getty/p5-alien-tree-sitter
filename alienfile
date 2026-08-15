@@ -2,7 +2,7 @@ use alienfile;
 use Path::Tiny;
 
 # Prefer a system libtree-sitter if pkg-config can find one.
-# Falls back to building from the vendored tree-sitter v0.20.8 source tree
+# Falls back to building from the vendored tree-sitter v0.20.8 source
 # under share/tree-sitter/.
 #
 # Why 0.20.8: it is the last release of the 0.20.x series, which still
@@ -18,13 +18,15 @@ plugin 'PkgConfig' => (
 
 share {
 
-  start_url Path::Tiny->cwd->child('share/tree-sitter')->stringify;
-  plugin 'Build::Simple';
+  start_url Path::Tiny->cwd->stringify;
 
+  # The tree-sitter library is built from a single translation unit:
+  # share/tree-sitter/src/lib.c, which #include-s every other .c in src/.
+  # We compile it directly into a static archive libtree-sitter.a so it
+  # can be linked straight into Text::Treesitter's XS .so. Grammar .so
+  # files (e.g. tree-sitter-bash.so) dlopen these symbols at runtime
+  # from the already-loaded Text::Treesitter .so.
   build [
-    # tree-sitter's lib.c is a translation-unit amalgamation; one
-    # .c file #include-s every other .c. Upstream compile_flags.txt
-    # says: -std=c99 -Isrc -Iinclude (relative paths).
     '%c -O2 -fPIC -std=c99 '
       . '-Ishare/tree-sitter/include '
       . '-Ishare/tree-sitter/src '
@@ -34,19 +36,20 @@ share {
     'ar rcs lib/libtree-sitter.a libtree-sitter.o',
   ];
 
-  # After build, hand the include + lib paths to Alien::Base props.
-  meta->prop->{cflags} = '-I' . path('share/tree-sitter/include')->absolute->stringify;
-  meta->prop->{libs}   = '-L' . path('lib')->absolute->stringify . ' -ltree-sitter';
-  meta->prop->{version} = '0.20.8';
-
   gather [
     [ 'share/tree-sitter/include' => '$(INSTALL_PREFIX)/include' ],
     [ 'share/tree-sitter/src'     => '$(INSTALL_PREFIX)/src'     ],
     [ 'lib'                       => '$(INSTALL_PREFIX)/lib'     ],
   ];
+
+  # After the build, advertise include + lib paths to consumers via the
+  # standard Alien::Base props.
+  meta->prop->{cflags}  = '-I' . path('share/tree-sitter/include')->absolute->stringify;
+  meta->prop->{libs}    = '-L' . path('lib')->absolute->stringify . ' -ltree-sitter';
+  meta->prop->{version} = '0.20.8';
 };
 
 sys {
   # Use the system libtree-sitter via pkg-config.
-  # (the share{} block above will be used only when the probe above fails)
+  # (The share{} block above will be used when the probe above fails.)
 };
