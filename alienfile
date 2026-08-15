@@ -1,5 +1,6 @@
 use alienfile;
 use Path::Tiny qw( path );
+use Alien::Build::Util qw( _mirror );
 
 # Prefer a system libtree-sitter if pkg-config can find one.
 # Falls back to building from the vendored tree-sitter v0.20.8 source
@@ -30,12 +31,34 @@ share {
   meta->before_hook(
     gather_share => sub {
       my ($build) = @_;
-      my $inc = $build->install_prop->{extract} . '/include';
-      my $lib = $build->install_prop->{stage}    . '/lib';
-      $build->runtime_prop->{cflags}        = "-I$inc";
-      $build->runtime_prop->{cflags_static} = "-I$inc";
-      $build->runtime_prop->{libs}          = "-L$lib -ltree-sitter";
-      $build->runtime_prop->{libs_static}   = "$lib/libtree-sitter.a";
+      my $stage   = $build->install_prop->{stage};
+      my $extract = $build->install_prop->{extract};
+      my $prefix  = $build->install_prop->{prefix};
+
+      # Copy include/, src/ and lib/ into the staged install prefix.
+      # Alien::Build's gather [] DSL only adds commands to the gather_share
+      # hook (which here doesn't run a real build system that populates
+      # stage by itself), so we mirror by hand.
+      for my $rel (qw( include src )) {
+        my $src = path("$extract/$rel");
+        my $dst = path("$stage/$rel");
+        next unless -d $src;
+        $dst->mkpath;
+        _mirror($src, $dst);
+      }
+      my $srclib = path("$extract/lib");
+      if (-d $srclib) {
+        my $dst = path("$stage/lib");
+        $dst->mkpath;
+        _mirror($srclib, $dst);
+      }
+
+      # Use the staged prefix for cflags/libs so Gather's install→runtime
+      # prefix rewrite (line 91-95 of Core/Gather.pm) actually applies.
+      $build->runtime_prop->{cflags}        = "-I$prefix/include";
+      $build->runtime_prop->{cflags_static} = "-I$prefix/include";
+      $build->runtime_prop->{libs}          = "-L$prefix/lib -ltree-sitter";
+      $build->runtime_prop->{libs_static}   = "$prefix/lib/libtree-sitter.a";
       $build->runtime_prop->{version}       = '0.20.8';
     }
   );
