@@ -1,8 +1,9 @@
 use Test2::V0;
 use Alien::Tree::Sitter;
 
-ok( defined &Alien::Tree::Sitter::cflags, 'has cflags method' );
-ok( defined &Alien::Tree::Sitter::libs,   'has libs method' );
+ok( Alien::Tree::Sitter->can('cflags'), 'has cflags method' );
+ok( Alien::Tree::Sitter->can('libs'),   'has libs method' );
+ok( Alien::Tree::Sitter->can('version'),'has version method' );
 
 my $cflags = Alien::Tree::Sitter->cflags;
 ok( $cflags =~ m/-I/, 'cflags contains -I include path' );

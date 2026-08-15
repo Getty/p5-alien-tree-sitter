@@ -1,7 +1,7 @@
 requires 'Alien::Base'  => '2.38';
 requires 'Alien::Build' => '2.38';
 
-requires 'path::tiny'   => '0';
+requires 'Path::Tiny'   => '0';
 
 on 'test' => sub {
   requires 'Test2::V0' => '0';

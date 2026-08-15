@@ -23,6 +23,23 @@ share {
   plugin 'Fetch::Local';
   plugin 'Extract' => 'tar.gz';
 
+  # Populate runtime_prop before Gather writes _alien/alien.json so
+  # Alien::Base can read it back at install time. We hook gather_share
+  # early (before Alien::Build::Plugin::Core::Gather's prefix rewrite
+  # runs and before the alien.json file is dropped).
+  meta->before_hook(
+    gather_share => sub {
+      my ($build) = @_;
+      my $inc = $build->install_prop->{extract} . '/include';
+      my $lib = $build->install_prop->{stage}    . '/lib';
+      $build->runtime_prop->{cflags}        = "-I$inc";
+      $build->runtime_prop->{cflags_static} = "-I$inc";
+      $build->runtime_prop->{libs}          = "-L$lib -ltree-sitter";
+      $build->runtime_prop->{libs_static}   = "$lib/libtree-sitter.a";
+      $build->runtime_prop->{version}       = '0.20.8';
+    }
+  );
+
   # The tree-sitter library is built from a single translation unit:
   # share/tree-sitter/src/lib.c, which #include-s every other .c in src/.
   # We compile it directly into a static archive libtree-sitter.a so it
@@ -49,7 +66,7 @@ share {
   # After the build, advertise include + lib paths to consumers via the
   # standard Alien::Base props.
   meta->prop->{cflags}  = '-I%{.install.extract}/include';
-  meta->prop->{libs}    = '-L' . path('lib')->absolute->stringify . ' -ltree-sitter';
+  meta->prop->{libs}    = '-L%{.install.stage}/lib -ltree-sitter';
   meta->prop->{version} = '0.20.8';
 };
 
