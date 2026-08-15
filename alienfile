@@ -1,0 +1,52 @@
+use alienfile;
+use Path::Tiny;
+
+# Prefer a system libtree-sitter if pkg-config can find one.
+# Falls back to building from the vendored tree-sitter v0.20.8 source tree
+# under share/tree-sitter/.
+#
+# Why 0.20.8: it is the last release of the 0.20.x series, which still
+# ships tree_sitter/parser.h (the canonical entry-point header that
+# upstream grammar parser.c files #include). 0.22 removed parser.h and
+# unified everything into tree_sitter/api.h, breaking ABI compatibility
+# with grammars that target 0.20.x.
+
+plugin 'PkgConfig' => (
+  pkg_name        => 'tree-sitter',
+  minimum_version => '0.20',
+);
+
+share {
+
+  start_url Path::Tiny->cwd->child('share/tree-sitter')->stringify;
+  plugin 'Build::Simple';
+
+  build [
+    # tree-sitter's lib.c is a translation-unit amalgamation; one
+    # .c file #include-s every other .c. Upstream compile_flags.txt
+    # says: -std=c99 -Isrc -Iinclude (relative paths).
+    '%c -O2 -fPIC -std=c99 '
+      . '-Ishare/tree-sitter/include '
+      . '-Ishare/tree-sitter/src '
+      . '-c share/tree-sitter/src/lib.c '
+      . '-o libtree-sitter.o',
+
+    'ar rcs lib/libtree-sitter.a libtree-sitter.o',
+  ];
+
+  # After build, hand the include + lib paths to Alien::Base props.
+  meta->prop->{cflags} = '-I' . path('share/tree-sitter/include')->absolute->stringify;
+  meta->prop->{libs}   = '-L' . path('lib')->absolute->stringify . ' -ltree-sitter';
+  meta->prop->{version} = '0.20.8';
+
+  gather [
+    [ 'share/tree-sitter/include' => '$(INSTALL_PREFIX)/include' ],
+    [ 'share/tree-sitter/src'     => '$(INSTALL_PREFIX)/src'     ],
+    [ 'lib'                       => '$(INSTALL_PREFIX)/lib'     ],
+  ];
+};
+
+sys {
+  # Use the system libtree-sitter via pkg-config.
+  # (the share{} block above will be used only when the probe above fails)
+};
