@@ -1,0 +1,66 @@
+use alienfile;
+
+probe 'share';
+
+# The vendored tree-sitter is built from a single translation unit:
+# share/tree-sitter/src/lib.c, which #include-s every other .c in src/.
+# We compile it as a static archive libtree-sitter.a so it can be linked
+# straight into Text::Treesitter's XS .so.
+#
+# compile_flags.txt from upstream says: -std=c99 -Isrc -Iinclude
+# Both -I paths are relative to share/tree-sitter/.
+
+share {
+
+  # Provide -I for the vendored headers via the standard Alien props
+  plugin 'PkgConfig' => 'tree_sitter';
+
+  start_url 'share/tree-sitter';
+
+  # After the build step, advertise include + lib paths to consumers.
+  meta->prop->{cflags} = "-I" . path(qq{share/tree-sitter/include})->absolute->stringify;
+  meta->prop->{libs}   = join ' ',
+    '-L' . path(qq{share/tree-sitter/lib})->absolute->stringify,
+    '-ltree-sitter';
+
+  build [
+    # Step 1: compile share/tree-sitter/src/lib.c (which #include-s every
+    # other .c) into libtree-sitter.a. The grammar .so files that consumers
+    # build via Text::Treesitter::Language::build will dlopen this archive's
+    # symbols at runtime via the already-loaded Text::Treesitter::_XS .so.
+    [
+      '%c  -O2 -fPIC -std=c99 -Ishare/tree-sitter/include -Ishare/tree-sitter/src '
+      . '-c share/tree-sitter/src/lib.c -o libtree-sitter.o',
+
+      '%c  -O2 -fPIC -std=c99 -c share/tree-sitter/src/lib.c -o libtree-sitter.o',
+    ],
+
+    'ar rcs lib/libtree-sitter.a libtree-sitter.o',
+  ];
+};
+
+gather [
+  # The runtime dirs consumers care about.
+  ['share/tree-sitter/include' => '$(INSTALL_PREFIX)/include'],
+  ['share/tree-sitter/src'     => '$(INSTALL_PREFIX)/src'],
+];
+
+# Expose version, include path, lib path
+meta->prop->{version} = '0.20.8';
+meta->prop->{prefix}  = path('share/tree-sitter')->absolute->stringify;
+
+sys {
+
+  # If a system libtree-sitter is available, prefer it. The vendored
+  # 0.20.8 is provided as a fallback for systems where the system library
+  # ABI does not match (e.g. Debian's 0.22.x has only api.h, not parser.h).
+  plugin 'PkgConfig' => 'tree_sitter';
+
+  cflags  => '%{pkg_config --cflags tree_sitter}';
+  libs    => '%{pkg_config --libs   tree_sitter}';
+  version => '%{pkg_config --modversion tree_sitter}';
+};
+
+# Override probe so a missing system tree-sitter does not fail the build;
+# we always have the vendored source.
+probe sub { return 'share' };
