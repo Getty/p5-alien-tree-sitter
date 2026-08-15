@@ -30,24 +30,25 @@ share {
   # files (e.g. tree-sitter-bash.so) dlopen these symbols at runtime
   # from the already-loaded Text::Treesitter .so.
   build [
-    '%c -O2 -fPIC -std=c99 '
-      . '-Ishare/tree-sitter/include '
-      . '-Ishare/tree-sitter/src '
-      . '-c share/tree-sitter/src/lib.c '
+    'cc -O2 -fPIC -std=c99 '
+      . '-I%{.install.extract}/include '
+      . '-I%{.install.extract}/src '
+      . '-c %{.install.extract}/src/lib.c '
       . '-o libtree-sitter.o',
 
+    'mkdir -p lib',
     'ar rcs lib/libtree-sitter.a libtree-sitter.o',
   ];
 
   gather [
-    [ 'share/tree-sitter/include' => '$(INSTALL_PREFIX)/include' ],
-    [ 'share/tree-sitter/src'     => '$(INSTALL_PREFIX)/src'     ],
-    [ 'lib'                       => '$(INSTALL_PREFIX)/lib'     ],
+    [ '%{.install.extract}/include' => '$(INSTALL_PREFIX)/include' ],
+    [ '%{.install.extract}/src'     => '$(INSTALL_PREFIX)/src'     ],
+    [ 'lib'                         => '$(INSTALL_PREFIX)/lib'     ],
   ];
 
   # After the build, advertise include + lib paths to consumers via the
   # standard Alien::Base props.
-  meta->prop->{cflags}  = '-I' . path('share/tree-sitter/include')->absolute->stringify;
+  meta->prop->{cflags}  = '-I%{.install.extract}/include';
   meta->prop->{libs}    = '-L' . path('lib')->absolute->stringify . ' -ltree-sitter';
   meta->prop->{version} = '0.20.8';
 };
