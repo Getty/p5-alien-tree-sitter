@@ -1,0 +1,28 @@
+{
+   "args" : [
+      "root",
+      "_alien",
+      "meta_prop",
+      {}
+   ],
+   "install" : {
+      "download_rule" : "warn",
+      "mm" : {
+         "distname" : "Alien-Tree-Sitter"
+      },
+      "patch" : null,
+      "prefix" : "/home/getty/dev/p5-alien-tree-sitter/.build/ZKIMsK9WlQ/blib/lib/auto/share/dist/Alien-Tree-Sitter",
+      "root" : "/home/getty/dev/p5-alien-tree-sitter/.build/ZKIMsK9WlQ/_alien",
+      "stage" : "/home/getty/dev/p5-alien-tree-sitter/.build/ZKIMsK9WlQ/blib/lib/auto/share/dist/Alien-Tree-Sitter"
+   },
+   "plugin_instance" : {},
+   "runtime" : {
+      "alien_build_version" : "2.84",
+      "install_type" : "share",
+      "legacy" : {
+         "name" : "tree-sitter"
+      },
+      "perl_module_version" : "0.001",
+      "prefix" : "/home/getty/perl5/lib/perl5/x86_64-linux-gnu-thread-multi/auto/share/dist/Alien-Tree-Sitter"
+   }
+}
