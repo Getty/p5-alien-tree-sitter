@@ -1,0 +1,14 @@
+---
+class: standard
+created: 2026-08-31T04:28:25Z
+id: 1
+priority: low
+status: backlog
+tags:
+- alien
+- pkgconfig
+title: 'Optional: PkgConfig::CommandLine im sys{}-Block ergaenzen'
+updated: 2026-08-31T04:28:25Z
+---
+
+Der sys{}-Block im alienfile ist aktuell leer. Der PkgConfig-Probe erkennt eine System-libtree-sitter (>=0.20) und ueberspringt dann den share{}-Build; das share-Verhalten braucht keinen sys{}-Inhalt. Fuer sauberere PkgConfig-Integration auf Hosts mit installiertem libtree-sitter-dev koennte plugin PkgConfig::CommandLine im sys{}-Block ergaenzt werden. Rein optional, kein Blocker. Bei Umsetzung: Probe-Pfad (System-Lib vorhanden) testen, dass cflags/libs/version weiterhin die Contract-Assertions aus t/01_basic.t erfuellen.
