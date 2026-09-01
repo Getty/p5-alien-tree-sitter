@@ -9,5 +9,4 @@ on 'test' => sub {
 
 on 'develop' => sub {
   requires 'Dist::Zilla'             => '0';
-  requires 'Dist::Zilla::Plugin::Author::GETTY' => '0';
 };
