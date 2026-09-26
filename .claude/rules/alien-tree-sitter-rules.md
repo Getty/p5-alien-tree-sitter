@@ -33,14 +33,14 @@ Depends on whether the Agent/Task tool is available to you.
 
 - **You can spawn subagents** (orchestrating main agent): Do NOT touch behavior-relevant
   code yourself — delegate. Your lane: coordinate, inspect, plan, review diffs, run
-  tests, manage git, edit `Changes`/`README.md`. When in doubt, delegate. Why: only the
+  tests, edit `Changes`/`README.md`. When in doubt, delegate. Why: only the
   `alien-tree-sitter-*` agents get their skills force-loaded via `briefing.skills`; you
   get no briefing and would edit the alienfile without the tree-sitter and Alien context.
 
   | Task | Agent |
   |---|---|
   | Implement / refactor / debug the alienfile, the `.pm`, or `t/` | `alien-tree-sitter-worker` (default) |
-  | Pre-release audit | `alien-tree-sitter-release-checker` |
+  | Commits, `Changes`, card → done, pre-release audit | `alien-tree-sitter-release-manager` |
 
 - **You cannot spawn subagents** (you ARE an `alien-tree-sitter-*` agent): the lock does
   not apply — implement, refactor, debug and test per these rules.
@@ -49,16 +49,19 @@ Behavior-relevant = the `alienfile` (probe/build/gather/runtime_prop),
 `lib/Alien/Tree/Sitter.pm`, `t/`, and the vendored `share/` payload. Prose in `README.md`
 and `Changes` bullets are not.
 
+**Only `alien-tree-sitter-release-manager` commits.** A worker leaves a commit-ready tree and hands its card
+to `review`; you then dispatch `alien-tree-sitter-release-manager` to cut the commit and close the card.
+
 ## Coordination — karr board (always in scope)
 
 Ticket coordination is the orchestrating agent's job, so `karr` is always in scope — don't
-invoke the `kanban-issues-karr-cli` skill first, just use it. Git-native kanban; state
+invoke the `kanban-issues-karr-coordination` skill first, just use it. Git-native kanban; state
 lives in `refs/karr/*`.
 
 - `karr list --compact` / `karr board` — open work · `karr show ID` — detail
 - `karr create "Title" --priority high --tags a,b --body '…'` · `karr edit ID -a "note"`
   · `karr move ID in-progress --claim NAME` · `karr handoff ID --claim NAME --note "…"`
-  — full surface: skill `kanban-issues-karr-cli`
+  — full surface: skill `kanban-issues-karr-coordination`
 
 Record drift and follow-up work as tickets rather than growing the current change.
 **Serialize board mutations when fanning out** — parallel implementation is fine, but

@@ -13,7 +13,7 @@ principle, the lane definition and this dist's hazards are in
 | Task | Agent |
 |---|---|
 | Implement / refactor / debug the alienfile, `lib/Alien/Tree/Sitter.pm`, or `t/` | `alien-tree-sitter-worker` (default) |
-| Pre-release audit | `alien-tree-sitter-release-checker` |
+| Commits, `Changes`, card → done, pre-release audit | `alien-tree-sitter-release-manager` |
 
 The agents carry their knowledge via `briefing.skills` (see `.claude/agents/`); the main
 agent delegates rather than loading them. The tree-sitter specifics — why 0.20.8, the
