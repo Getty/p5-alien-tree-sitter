@@ -2,7 +2,6 @@
 name: alien-tree-sitter-worker
 description: "Default Alien::Tree::Sitter worker — implement, refactor, debug and test this Alien::Base distribution that vendors tree-sitter 0.20.8 as a static libtree-sitter.a. Owns the alienfile probe/build/gather pipeline, the runtime_prop wiring, lib/Alien/Tree/Sitter.pm and t/. Pre-loaded with Getty's Perl house rules, the Alien and XS patterns, the release flow and this dist's tree-sitter specifics. Leaves a commit-ready tree; never commits — commits belong to alien-tree-sitter-release-manager."
 model: inherit
-allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 briefing:
   skills:
     - alien-tree-sitter-core

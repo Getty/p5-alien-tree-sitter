@@ -2,7 +2,6 @@
 name: alien-tree-sitter-release-manager
 description: "Owns alien-tree-sitter's commits and release readiness — cuts commits from the worker's commit-ready tree, writes commit messages and Changes entries, moves karr cards to done. Release audit: Alien::Tree::Sitter before a release — cpanfile deps declared and pinned to released Alien::Base/Alien::Build, $VERSION present, Changes current, the vendored tarball intact, dist.ini's alien_build flag set, dzil build and test green. Workers never commit; this agent does. Never pushes, tags or releases."
 model: sonnet
-allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 briefing:
   skills:
     - getty-git-commit-style
