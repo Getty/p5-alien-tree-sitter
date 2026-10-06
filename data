@@ -1,0 +1,23 @@
+---
+class: standard
+created: 2026-10-06T19:41:09Z
+id: 4
+priority: low
+status: backlog
+tags:
+- hygiene
+- alien
+- review-2026-10-06
+title: tree-sitter-Quellen liegen doppelt im Repo (entpackt und als Tarball); POD,
+  Changes und alienfile-Reste zeigen auf die falsche Kopie
+updated: 2026-10-06T19:41:09Z
+---
+
+`share/tree-sitter/` (entpackt, 43 getrackte Dateien) und `share/tree-sitter-0.20.8.tar.gz` enthalten dasselbe (Tarball entpackt und mit `diff -rq` gegen das Verzeichnis verglichen: keine Unterschiede). Gebaut wird ausschließlich aus dem Tarball (`alienfile:22`), während das POD ("The vendored source is kept under share/tree-sitter/") und `Changes` ("Build static archive libtree-sitter.a from share/tree-sitter/src/lib.c") die entpackte Kopie nennen. Wer dort patcht, ändert nichts am Build, und beide Kopien landen im CPAN-Tarball.
+
+Im selben Zug aufräumen: der `gather [ [ '%{.install.extract}/include' => '$(INSTALL_PREFIX)/include' ], ... ]`-Block (`alienfile:83-87`) ist keine Kopieranweisung - das eigentliche Kopieren macht der `before_hook` darüber (`alienfile:31-64`); `meta->prop->{cflags|libs|version}` (`alienfile:91-93`) setzt Meta- statt Runtime-Properties; der `sys {}`-Block ist leer (dazu gibt es k1). `cc`, `ar` und `mkdir -p` sind fest verdrahtet (`alienfile:72-80`) statt über `%{cc}` bzw. `$Config{cc}`/`$Config{ar}` zu gehen.
+
+Fertig, wenn: es genau eine Quelle gibt (Tarball oder Verzeichnis), POD und Changes sie korrekt benennen und der alienfile nur noch Blöcke enthält, die etwas tun.
+
+---
+Fleet review 2026-10-06 · kind: hygiene · confidence: verified
