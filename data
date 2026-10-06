@@ -1,0 +1,21 @@
+---
+class: standard
+created: 2026-10-06T19:41:05Z
+id: 3
+priority: low
+status: backlog
+tags:
+- hygiene
+- changes
+- review-2026-10-06
+title: 'Changes führt 0.001 doppelt: {{$NEXT}} mit "Initial release" über einem handgeschriebenen
+  0.001-Block'
+updated: 2026-10-06T19:41:05Z
+---
+
+`Changes` hat unter `{{$NEXT}}` sechs Zeilen ("Initial release", "Vendor tree-sitter v0.20.8 ...") und darunter einen von Hand datierten Block `0.001     2026-08-15` / `- Initial CPAN release`. Die Dist hat keinen Git-Tag (`git tag` ist leer) und `$VERSION = '0.001'` (`lib/Alien/Tree/Sitter.pm:3`); der nächste Release-Lauf schreibt also einen zweiten Kopf `0.001 <Datum>` über den vorhandenen.
+
+Fertig, wenn: der handgeschriebene 0.001-Block weg ist und die Einträge nur noch unter `{{$NEXT}}` stehen.
+
+---
+Fleet review 2026-10-06 · kind: hygiene · confidence: verified
