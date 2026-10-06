@@ -1,0 +1,26 @@
+---
+class: standard
+created: 2026-10-06T19:41:00Z
+id: 2
+priority: medium
+status: backlog
+tags:
+- alien
+- build
+- bug
+- review-2026-10-06
+title: System-Probe akzeptiert jedes tree-sitter >= 0.20 - auch die 0.22+-Versionen,
+  vor denen die Dist schützen soll
+updated: 2026-10-06T19:41:00Z
+---
+
+`alienfile:15-18`: `plugin 'PkgConfig' => ( pkg_name => 'tree-sitter', minimum_version => '0.20' )` - ohne Obergrenze. Derselbe alienfile (`alienfile:9-13`) und das POD (`lib/Alien/Tree/Sitter.pm`, Abschnitt WHY) begründen die Dist damit, dass 0.22 `tree_sitter/parser.h` entfernt hat und Grammatiken für 0.20.x dagegen nicht mehr bauen. Auf einem Host mit `libtree-sitter-dev` >= 0.22 gewinnt aber genau diese Systembibliothek den Probe, der Vendor-Build wird übersprungen, und Konsumenten bekommen die Header ohne `parser.h`.
+
+Zweite Folge: `t/01_basic.t:14` verlangt hart `is( Alien::Tree::Sitter->version, '0.20.8', ... )` - das schlägt auf jedem System-Install fehl, auch auf einem an sich passenden 0.20.7.
+
+Hier nicht nachstellbar (`pkg-config --modversion tree-sitter` findet nichts, installiert ist `share` 0.20.8), aus dem Code aber eindeutig.
+
+Fertig, wenn: der Probe auf die 0.20.x-Linie begrenzt ist (Obergrenze bzw. eigener Probe, der zusätzlich `tree_sitter/parser.h` verlangt) oder ganz entfällt (immer share - die Quelle ist ohnehin gebündelt), und der Test die Version passend zum Install-Typ prüft.
+
+---
+Fleet review 2026-10-06 · kind: bug · confidence: verified
