@@ -27,6 +27,11 @@ maintainer decision with a downstream-grammar audit, never a routine update.
 The version string `0.20.8` appears in three places that must agree: the tarball name
 `share/tree-sitter-0.20.8.tar.gz`, `start_url`, and `runtime_prop->{version}`.
 
+The vendored tarball is **upstream-verbatim** — never repacked, never patched, no
+added files, no fixed timestamps. A repacked tarball breaks the byte-for-byte
+comparison against the upstream release, and the vendored copy is exactly what a
+downstream grammar build ends up compiling.
+
 ## share vs system
 
 `plugin 'PkgConfig' => (pkg_name => 'tree-sitter', minimum_version => '0.20')` runs the
@@ -82,3 +87,21 @@ path, `libs` references `-ltree-sitter`, `version` is exactly `0.20.8`, and
 `tree_sitter/parser.h` + `tree_sitter/api.h` exist at the install prefix. Those four are
 the reason the distribution exists — a change that breaks any of them breaks
 `Text::Treesitter::Bash`'s `Text::Treesitter::Language::build`.
+
+## Repo mechanics
+
+- **An untracked file does not exist as far as dzil is concerned.** `Git::GatherDir`
+  collects only what git knows about: a new file that was never `git add`-ed is skipped
+  while gathering, so `prove` runs it and passes while the release tarball silently
+  omits it. `git add` new files as soon as they exist.
+- **`.claude/` is git-ignored except for a whitelist.** The root `.gitignore` ignores
+  `.claude/*` and re-admits `settings.json`, `agents/`, `skills/`, `rules/` — a *new*
+  directory under `.claude/` therefore stays invisible to git until it is whitelisted
+  there. Verify with `git status --short` after creating one; the same applies to
+  `.claude/worktrees/`, which is ignored explicitly.
+- **Two kinds of skill live under `.claude/skills/`.** The ones `skilletor` installs
+  (`skilletor status` lists them under *project scope*) carry a `.gitignore` holding `*`
+  in their own directory — they are build artifacts, the next `skilletor sync` overwrites
+  them, and editing one is forbidden. A repo-owned skill (tracked by git, no entry in
+  `.claude/skilletor.json`) belongs to this repository: `alien-tree-sitter-core` is the
+  only one here, and it is the file to extend when the rules grow too long.
