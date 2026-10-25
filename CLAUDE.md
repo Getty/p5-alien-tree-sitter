@@ -7,8 +7,9 @@ headers to Text::Treesitter consumers via `cflags`/`libs`/`version`.
 ## Delegation
 
 Delegate behavior-relevant code to the right agent instead of touching it yourself — the
-principle, the lane definition and this dist's hazards are in
-`.claude/rules/alien-tree-sitter-rules.md` (auto-loaded every turn).
+principle is a shared house rule (skilletor bundle `getty-cpan-dist@getty`); the lane
+definition and this dist's hazards are in `.claude/rules/alien-tree-sitter-rules.md`
+(auto-loaded every turn).
 
 | Task | Agent |
 |---|---|
