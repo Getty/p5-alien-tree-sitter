@@ -2,17 +2,40 @@
 use Test2::V0;
 use Alien::Tree::Sitter;
 
+my $install_type = Alien::Tree::Sitter->install_type;
+my $cflags       = Alien::Tree::Sitter->cflags;
+my $libs         = Alien::Tree::Sitter->libs;
+my $version      = Alien::Tree::Sitter->version;
+
+diag("install type: $install_type");
+diag("cflags: [$cflags]");
+diag("libs: [$libs]");
+diag("version: [$version]");
+
 ok( Alien::Tree::Sitter->can('cflags'), 'has cflags method' );
 ok( Alien::Tree::Sitter->can('libs'),   'has libs method' );
 ok( Alien::Tree::Sitter->can('version'),'has version method' );
 
-my $cflags = Alien::Tree::Sitter->cflags;
-ok( $cflags =~ m/-I/, 'cflags contains -I include path' );
+# libs is the invariant: every consumer links tree-sitter through it, on the
+# system and on the share path alike.
+like( $libs, qr/-ltree-sitter\b/, 'libs references libtree-sitter' );
 
-my $libs = Alien::Tree::Sitter->libs;
-ok( $libs =~ m/-ltree-sitter/, 'libs references libtree-sitter' );
-
-is( Alien::Tree::Sitter->version, '0.20.8', 'vendored version is 0.20.8' );
+# cflags and version differ by install type:
+#   * share  - headers live in the Alien's private prefix, so cflags MUST carry
+#              an -I include path, and the version is the vendored one.
+#   * system - pkg-config reports empty cflags when the headers sit on the
+#              default include path, so the contract is only that cflags is
+#              defined; the version is whatever the alienfile's probe accepts
+#              (the 0.20.x series).
+if ( $install_type eq 'share' ) {
+  like( $cflags, qr/(?:^|\s)-I\S/, 'share cflags carries an -I include path' );
+  is( $version, '0.20.8', 'vendored version is 0.20.8' );
+}
+else {
+  ok( defined $cflags,
+    'system cflags defined (may be empty: headers on the default include path)' );
+  like( $version, qr/^0\.20\.\d+$/, 'system version is in the 0.20.x series' );
+}
 
 # Headers are verified downstream: any consumer that builds a tree-sitter
 # grammar (e.g. Text::Treesitter::Bash) will fail loudly if parser.h is

@@ -2,19 +2,21 @@ use alienfile;
 use Path::Tiny qw( path );
 use Alien::Build::Util qw( _mirror );
 
-# Prefer a system libtree-sitter if pkg-config can find one.
-# Falls back to building from the vendored tree-sitter v0.20.8 source
-# under share/tree-sitter/.
+# Prefer a system libtree-sitter if pkg-config can find one in the 0.20.x
+# series. Falls back to building from the vendored tree-sitter v0.20.8
+# source under share/.
 #
-# Why 0.20.8: it is the last release of the 0.20.x series, which still
-# ships tree_sitter/parser.h (the canonical entry-point header that
-# upstream grammar parser.c files #include). 0.22 removed parser.h and
-# unified everything into tree_sitter/api.h, breaking ABI compatibility
-# with grammars that target 0.20.x.
+# Why 0.20.x only: 0.20.8 is the last release of the 0.20.x series, which
+# still installs tree_sitter/parser.h next to api.h (the entry-point header
+# that upstream grammar parser.c files #include). From 0.21.0 on parser.h
+# lives in lib/src/ and is not installed, so a system libtree-sitter of
+# 0.21 or newer cannot serve grammars that target 0.20.x. The probe
+# therefore accepts 0.20.0 through 0.20.99 and nothing newer.
 
 plugin 'PkgConfig' => (
   pkg_name        => 'tree-sitter',
   minimum_version => '0.20',
+  max_version     => '0.20.99',
 );
 
 share {
@@ -78,6 +80,32 @@ share {
 
     'mkdir -p lib',
     'ar rcs lib/libtree-sitter.a libtree-sitter.o',
+
+    # Like upstream's `make install`, ship a tree-sitter.pc with the vendored
+    # version and the install prefix. The PkgConfig plugin's own gather_share
+    # hook runs inside the stage and Core::Gather puts <stage>/lib/pkgconfig
+    # on PKG_CONFIG_PATH, but only if that directory already exists when the
+    # hook starts - so the .pc is written here, during the build, and not in
+    # the gather hook. The plugin then describes the vendored build and not
+    # a libtree-sitter that happens to be installed on the host.
+    sub {
+      my ($build) = @_;
+      my $prefix = $build->install_prop->{prefix};
+      my $pcdir  = path($build->install_prop->{stage}, 'lib', 'pkgconfig');
+      $pcdir->mkpath;
+      $pcdir->child('tree-sitter.pc')->spew(<<"PC");
+prefix=$prefix
+includedir=\${prefix}/include
+libdir=\${prefix}/lib
+
+Name: tree-sitter
+Description: An incremental parsing system for programming tools
+URL: https://tree-sitter.github.io/
+Version: 0.20.8
+Libs: -L\${libdir} -ltree-sitter
+Cflags: -I\${includedir}
+PC
+    },
   ];
 
   gather [
@@ -91,9 +119,4 @@ share {
   meta->prop->{cflags}  = '-I%{.install.extract}/include';
   meta->prop->{libs}    = '-L%{.install.stage}/lib -ltree-sitter';
   meta->prop->{version} = '0.20.8';
-};
-
-sys {
-  # Use the system libtree-sitter via pkg-config.
-  # (The share{} block above will be used when the probe above fails.)
 };

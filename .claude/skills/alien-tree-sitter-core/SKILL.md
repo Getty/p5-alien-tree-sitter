@@ -34,11 +34,25 @@ downstream grammar build ends up compiling.
 
 ## share vs system
 
-`plugin 'PkgConfig' => (pkg_name => 'tree-sitter', minimum_version => '0.20')` runs the
-probe: if the host has a `pkg-config`-visible `libtree-sitter >= 0.20` (e.g. Debian
-`libtree-sitter-dev`), the `sys {}` path uses it and the whole `share {}` block is
-skipped. Otherwise the probe fails and `share {}` builds from the bundled tarball. No
-network is ever needed — the source is vendored, fetched via `Fetch::Local`.
+`plugin 'PkgConfig' => (pkg_name => 'tree-sitter', minimum_version => '0.20', max_version => '0.20.99')`
+runs the probe: if the host has a `pkg-config`-visible
+`libtree-sitter` of the 0.20.x series, the system path uses it and `share {}` is skipped.
+Otherwise the probe fails and `share {}` builds from the bundled tarball. No network is
+ever needed — the source is vendored, fetched via `Fetch::Local`.
+
+- **The window ends at 0.20.99 because 0.21.0 stopped installing `tree_sitter/parser.h`**
+  (it moved to `lib/src/`; only `api.h` stays in `include/`). Grammar `parser.c` files for
+  0.20.x include it, so a newer system library cannot serve them.
+- **Debian bookworm's `libtree-sitter-dev` (0.20.7) ships a `.pc` that says `Version: 0.6.3`**,
+  so the probe falls back to the share build there.
+- **The share build ships its own `tree-sitter.pc`** (version 0.20.8, install prefix),
+  as upstream's `make install` does. The plugin also registers a `gather_share` hook that
+  runs pkg-config after the share build; without a vendored `.pc` it finds the *system*
+  library and overwrites `cflags`/`libs`/`version`. `Core::Gather` puts
+  `<stage>/lib/pkgconfig` on `PKG_CONFIG_PATH` only if that directory exists when the hook
+  starts, so a Perl step at the end of `build []` writes the `.pc` before that hook starts.
+- `t/01_basic.t` branches on `install_type`; `t/02_probe.t` pins the version window with
+  fake `.pc` files.
 
 ## The build is one translation unit
 

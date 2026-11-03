@@ -3,10 +3,11 @@
   - Initial release
   - Vendor tree-sitter v0.20.8 (C99 library, single-translation-unit build)
   - Build static archive libtree-sitter.a from share/tree-sitter/src/lib.c
-  - Expose cflags (-I include) and libs (-L lib -ltree-sitter)
+  - Ship a tree-sitter.pc with the share build, so cflags (-I include), libs
+    (-L lib -ltree-sitter) and version describe the vendored library
+  - Prefer a system libtree-sitter from the 0.20.x series: 0.21.0 and newer
+    no longer install tree_sitter/parser.h, which grammars targeting 0.20.x
+    include
   - Compatible with grammars that target the 0.20.x tree-sitter ABI
     (e.g. tree-sitter-bash 0.20.5)
-
-0.001     2026-08-15
-
-  - Initial CPAN release
+  - Tests cover both install types and the version window of the system probe
