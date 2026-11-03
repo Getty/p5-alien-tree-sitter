@@ -1,6 +1,15 @@
 #!/usr/bin/env perl
 use Test2::V0;
+use File::Spec;
+use JSON::PP ();
 use Alien::Tree::Sitter;
+
+sub slurp {
+  my ($file) = @_;
+  open my $fh, '<', $file or return '';
+  local $/;
+  return scalar <$fh>;
+}
 
 my $install_type = Alien::Tree::Sitter->install_type;
 my $cflags       = Alien::Tree::Sitter->cflags;
@@ -30,6 +39,17 @@ like( $libs, qr/-ltree-sitter\b/, 'libs references libtree-sitter' );
 if ( $install_type eq 'share' ) {
   like( $cflags, qr/(?:^|\s)-I\S/, 'share cflags carries an -I include path' );
   is( $version, '0.20.8', 'vendored version is 0.20.8' );
+
+  # The shipped tree-sitter.pc describes the installed library: its prefix is
+  # the final install location recorded in alien.json, as with `make install`.
+  my $dist_dir = Alien::Tree::Sitter->dist_dir;
+  my $pc       = slurp( File::Spec->catfile( $dist_dir, 'lib', 'pkgconfig', 'tree-sitter.pc' ) );
+  my $alien    = JSON::PP::decode_json( slurp( File::Spec->catfile( $dist_dir, '_alien', 'alien.json' ) ) );
+  my ($pc_prefix) = $pc =~ /^prefix=(.*)$/m;
+  is( $pc_prefix, $alien->{prefix}, 'tree-sitter.pc names the install prefix' );
+  like( $pc, qr/^Version: 0\.20\.8$/m,             'tree-sitter.pc carries the vendored version' );
+  like( $pc, qr/^Cflags: -I\$\{includedir\}$/m,    'tree-sitter.pc carries the include path' );
+  like( $pc, qr/^Libs: -L\$\{libdir\} -ltree-sitter$/m, 'tree-sitter.pc carries the library' );
 }
 else {
   ok( defined $cflags,

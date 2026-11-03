@@ -82,15 +82,17 @@ share {
     'ar rcs lib/libtree-sitter.a libtree-sitter.o',
 
     # Like upstream's `make install`, ship a tree-sitter.pc with the vendored
-    # version and the install prefix. The PkgConfig plugin's own gather_share
-    # hook runs inside the stage and Core::Gather puts <stage>/lib/pkgconfig
-    # on PKG_CONFIG_PATH, but only if that directory already exists when the
-    # hook starts - so the .pc is written here, during the build, and not in
-    # the gather hook. The plugin then describes the vendored build and not
-    # a libtree-sitter that happens to be installed on the host.
+    # version and the final install prefix (runtime_prop; the install_prop
+    # prefix of this build is the stage). The PkgConfig plugin's own
+    # gather_share hook runs inside the stage and Core::Gather puts
+    # <stage>/lib/pkgconfig on PKG_CONFIG_PATH, but only if that directory
+    # already exists when the hook starts - so the .pc is written here, during
+    # the build, and not in the gather hook. The plugin then describes the
+    # vendored build and not a libtree-sitter that happens to be installed on
+    # the host.
     sub {
       my ($build) = @_;
-      my $prefix = $build->install_prop->{prefix};
+      my $prefix = $build->runtime_prop->{prefix};
       my $pcdir  = path($build->install_prop->{stage}, 'lib', 'pkgconfig');
       $pcdir->mkpath;
       $pcdir->child('tree-sitter.pc')->spew(<<"PC");
