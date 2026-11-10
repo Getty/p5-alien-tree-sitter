@@ -20,7 +20,7 @@ The agents carry their knowledge via `briefing.skills` (see `.claude/agents/`); 
 agent delegates rather than loading them. The tree-sitter specifics — why 0.20.8, the
 `runtime_prop`-in-`gather_share` hook, share-vs-system, the consumer contract — live in
 skill `alien-tree-sitter-core` under `.claude/skills/`; the rest of the skills there are
-hardlinks from the shared library, maintained via `manage-skills` in their home repos.
+installed by skilletor from `.claude/skilletor.json` and maintained in their source repos.
 
 ## Build / test
 
